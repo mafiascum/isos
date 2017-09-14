@@ -1,0 +1,18 @@
+services:
+    mafiascum.isos_and_activity_overview.listener:
+        class: mafiascum\isos_and_activity_overview\event\main_listener
+        arguments:
+            - '@controller.helper'
+            - '@template'
+            - '@request'
+        tags:
+            - { name: event.listener }
+    mafiascum.isos_and_activity_overview.controller:
+        class: mafiascum\isos_and_activity_overview\controller\main
+        arguments:
+            - '@config'
+            - '@controller.helper'
+            - '@language'
+            - '@template'
+            - '@dbal.conn'
+            - '@user'
