@@ -24,6 +24,9 @@ class main
     /* @var \phpbb\user */
 	protected $user;
 
+    /* @var \phpbb\request\request */
+    protected $request;
+
     /**
      * Constructor
      *
@@ -34,7 +37,7 @@ class main
      * @param \phpbb\db\driver\driver   $db
      * @param \phpbb\user               $user
      */
-    public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\language\language $language, \phpbb\template\template $template,	\phpbb\db\driver\driver_interface $db, \phpbb\user $user)
+    public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\language\language $language, \phpbb\template\template $template,	\phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\request\request $request)
     {
         $this->config   = $config;
         $this->helper   = $helper;
@@ -42,9 +45,17 @@ class main
         $this->template = $template;
         $this->db       = $db;
         $this->user     = $user;
+        $this->request  = $request;
+
+        $this->sort_type_map = array(
+            'pc' => 'count(*)',
+            'fpt' => 'min(p.post_time)',
+            'pt' => 'max(p.post_time)',
+            'un' => 'lower(u.username)',
+        );
     }
 
-    public function assign_template_for_topic_post_count($topic_id)
+    public function assign_template_for_topic_post_count($topic_id, $sort_type, $sort_order)
     {
         $sql = 'SELECT count(*) count, u.username, min(p.post_time) first_post_time, max(p.post_time) last_post_time
                 FROM ' . POSTS_TABLE . ' p
@@ -52,7 +63,7 @@ class main
                 ON p.poster_id = u.user_id
                 WHERE p.topic_id = ' . $topic_id . '
                 GROUP BY p.poster_id, u.username
-                ORDER BY max(p.post_time) DESC';
+                ORDER BY ' . $sort_type . ' ' . $sort_order;
 
         $result = $this->db->sql_query($sql);
         while ($row = $this->db->sql_fetchrow($result))
@@ -75,16 +86,29 @@ class main
      * Controller for activity overview
      *
      * @param string $topic_id
+     * @param string $sort_type
+     * @param string $sort_order
      * @throws \phpbb\exception\http_exception
      * @return \Symfony\Component\HttpFoundation\Response A Symfony Response object
      */
     public function handle($topic_id)
     {
+        $sort_type_opt = $this->request->variable('sort_type', 'pt');
+        $sort_order_opt = $this->request->variable('sort_order', 'a');
+
+        $sort_type = $this->sort_type_map[$sort_type_opt] ?? 'max(p.post_time)';
+
+        if ($sort_order_opt == 'd') {
+            $sort_order = 'DESC';
+        } else {
+            $sort_order = 'ASC';
+        }
+
         if (!$topic_id) {
             throw new \phpbb\exception\http_exception(400, 'NO_TOPIC', $topic_id);
         }
 
-        $this->assign_template_for_topic_post_count($topic_id);
+        $this->assign_template_for_topic_post_count($topic_id, $sort_type, $sort_order);
 
         return $this->helper->render('activity_overview.html', $name);
     }
