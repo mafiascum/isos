@@ -35,10 +35,11 @@ class main_listener implements EventSubscriberInterface
 
     static public function getSubscribedEvents()
     {
-	return array(
-	    'core.search_modify_param_before' => 'process_multi_author_search',
+        return array(
+            'core.search_modify_param_before' => 'process_multi_author_search',
             'core.user_setup'  => 'load_language_on_setup',
-	);
+            'core.viewtopic_assign_template_vars_before' => 'inject_template_vars',
+        );
     }
 
     /**
@@ -50,9 +51,18 @@ class main_listener implements EventSubscriberInterface
      */
     public function __construct(\phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\request\request $request)
     {
-	$this->helper = $helper;
-	$this->template = $template;
+        $this->helper = $helper;
+        $this->template = $template;
         $this->request = $request;
+    }
+
+    public function inject_template_vars($event)
+    {
+        $topic_id = $event['topic_id'];
+
+        $this->template->assign_vars(array(
+            'U_ACTIVITY_OVERVIEW' => $this->helper->route('activity_overview_route', array('topic_id' => $topic_id))
+        ));
     }
 
     /**
@@ -75,7 +85,7 @@ class main_listener implements EventSubscriberInterface
     {
         $author_ids = $this->request->variable('author_ids', array(0));
         if (!empty($author_ids)) {
-	    $event['author_id_ary'] = $author_ids;
+            $event['author_id_ary'] = $author_ids;
         }       
     }
 }
