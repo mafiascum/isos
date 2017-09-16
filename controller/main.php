@@ -55,7 +55,7 @@ class main
         );
     }
 
-    public function assign_template_for_topic_post_count($topic_id, $sort_type, $sort_order)
+    public function assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql)
     {
         $sql = 'SELECT count(*) count, u.username, min(p.post_time) first_post_time, max(p.post_time) last_post_time
                 FROM ' . POSTS_TABLE . ' p
@@ -63,7 +63,7 @@ class main
                 ON p.poster_id = u.user_id
                 WHERE p.topic_id = ' . $topic_id . '
                 GROUP BY p.poster_id, u.username
-                ORDER BY ' . $sort_type . ' ' . $sort_order;
+                ORDER BY ' . $sort_type_sql . ' ' . $sort_order_sql;
 
         $result = $this->db->sql_query($sql);
         while ($row = $this->db->sql_fetchrow($result))
@@ -82,6 +82,13 @@ class main
         $this->db->sql_freeresult($result);
     }
 
+    public function determine_sort_order($current_sort_type, $current_sort_order, $new_sort_type) {
+        if ($current_sort_type != $new_sort_type) {
+            return $current_sort_order;
+        } else {
+            return $current_sort_order == 'd' ? 'a' : 'd';
+        }
+    }
     /**
      * Controller for activity overview
      *
@@ -93,22 +100,25 @@ class main
      */
     public function handle($topic_id)
     {
-        $sort_type_opt = $this->request->variable('sort_type', 'pt');
-        $sort_order_opt = $this->request->variable('sort_order', 'a');
+        $sort_type = $this->request->variable('sort_type', 'pt');
+        $sort_order = $this->request->variable('sort_order', 'a');
 
-        $sort_type = $this->sort_type_map[$sort_type_opt] ?? 'max(p.post_time)';
-
-        if ($sort_order_opt == 'd') {
-            $sort_order = 'DESC';
-        } else {
-            $sort_order = 'ASC';
-        }
+        $sort_type_sql = $this->sort_type_map[$sort_type_opt] ?? 'max(p.post_time)';
+        $sort_order_sql = $sort_order == 'd' ? 'DESC' : 'ASC';
 
         if (!$topic_id) {
             throw new \phpbb\exception\http_exception(400, 'NO_TOPIC', $topic_id);
         }
 
-        $this->assign_template_for_topic_post_count($topic_id, $sort_type, $sort_order);
+        $this->assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql);
+        $this->template->assign_vars(array(
+            'TOPIC_ID'  => $topic_id,
+            'PC_LINK_SORT_ORDER' => $this->determine_sort_order($sort_type, $sort_order, 'pc'),
+            'FPT_LINK_SORT_ORDER' => $this->determine_sort_order($sort_type, $sort_order, 'fpt'),
+            'PT_LINK_SORT_ORDER' => $this->determine_sort_order($sort_type, $sort_order, 'pt'),
+            'UN_LINK_SORT_ORDER' => $this->determine_sort_order($sort_type, $sort_order, 'un'),
+            'U_ACTIVITY_OVERVIEW' => $this->helper->route('activity_overview_route', array('topic_id' => $topic_id)),
+        ));
 
         return $this->helper->render('activity_overview.html', $name);
     }
