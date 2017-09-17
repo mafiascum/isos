@@ -13,6 +13,7 @@
     <div class="dropdown-contents dropdown-nonscroll">
       <fieldset class="display-options">
         <input type="hidden" name="author_id" value="-1">
+        <input type="hidden" name="t" value="{{ TOPIC_ID }}">
         {% for user in TOPIC_USERS %}
         <li>
           <input type="checkbox" name="author_ids[]" value="{{ user.ID }}"><span>{{ user.USERNAME }}</span>
