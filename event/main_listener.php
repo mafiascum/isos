@@ -7,7 +7,7 @@
  *
  */
 
-namespace mafiascum\isos_and_activity_overview\event;
+namespace mafiascum\isos\event;
 
 /**
  * @ignore
@@ -33,6 +33,9 @@ class main_listener implements EventSubscriberInterface
     /* @var \phpbb\request\request */
     protected $request;
 
+    /* @var \phpbb\db\driver\driver */
+	protected $db;
+
     static public function getSubscribedEvents()
     {
         return array(
@@ -49,11 +52,32 @@ class main_listener implements EventSubscriberInterface
      * @param \phpbb\template\template	$template	Template object
      * @param \phpbb\request\request	$request	Request object
      */
-    public function __construct(\phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\request\request $request)
+    public function __construct(\phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\request\request $request, \phpbb\db\driver\driver_interface $db)
     {
         $this->helper = $helper;
         $this->template = $template;
         $this->request = $request;
+        $this->db = $db;
+    }
+
+    public function inject_users_for_topic($topic_id)
+    {
+        $sql = 'SELECT DISTINCT p.poster_id, u.username
+                FROM ' . POSTS_TABLE . ' p
+                JOIN ' . USERS_TABLE . ' u
+                ON p.poster_id = u.user_id
+                WHERE p.topic_id = ' . $topic_id . '
+                ORDER BY lower(u.username)';
+
+        $result = $this->db->sql_query($sql);
+        while ($row = $this->db->sql_fetchrow($result))
+        {
+            $this->template->assign_block_vars('TOPIC_USERS', array(
+                'ID'       => $row['poster_id'],
+                'USERNAME' => $row['username'],
+            ));
+        }
+        $this->db->sql_freeresult($result);
     }
 
     public function inject_template_vars($event)
@@ -63,11 +87,12 @@ class main_listener implements EventSubscriberInterface
         $this->template->assign_vars(array(
             'U_ACTIVITY_OVERVIEW' => $this->helper->route('activity_overview_route', array('topic_id' => $topic_id))
         ));
+        $this->inject_users_for_topic($topic_id);
     }
 
     /**
      * Load the language file
-     *     mafiascum/isos_and_activity_overview/language/en/demo.php
+     *     mafiascum/isos/language/en/demo.php
      *
      * @param \phpbb\event\data $event The event object
      */
@@ -75,7 +100,7 @@ class main_listener implements EventSubscriberInterface
     {
         $lang_set_ext = $event['lang_set_ext'];
         $lang_set_ext[] = array(
-            'ext_name' => 'mafiascum/isos_and_activity_overview',
+            'ext_name' => 'mafiascum/isos',
             'lang_set' => 'common',
         );
         $event['lang_set_ext'] = $lang_set_ext;

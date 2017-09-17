@@ -2,7 +2,7 @@
 
 use \Symfony\Component\HttpFoundation\Response;
 
-namespace mafiascum\isos_and_activity_overview\controller;
+namespace mafiascum\isos\controller;
 
 class main
 {

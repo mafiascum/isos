@@ -1,2 +1,2 @@
-# extensions-isos-and-activity-overview
+# isos
 ISO related functionality

@@ -24,4 +24,6 @@ $lang = array_merge($lang, array(
     'LAST_POST'         => 'Last Post',
     'ELAPSED_TIME'      => 'Elapsed Time',
     'POST_COUNT'        => 'Posts',
+    'ISO_SELECTED'      => 'ISO Selected',
+    'GO'                => 'Go',
 ));

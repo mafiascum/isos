@@ -1,5 +1,5 @@
 activity_overview_route:
     path: /activity_overview/{topic_id}
-    defaults: { _controller: mafiascum.isos_and_activity_overview.controller:handle }
+    defaults: { _controller: mafiascum.isos.controller:handle }
     requirements:
       topic_id: \d+
