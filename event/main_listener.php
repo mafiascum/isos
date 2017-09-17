@@ -40,6 +40,7 @@ class main_listener implements EventSubscriberInterface
     {
         return array(
             'core.search_modify_param_before' => 'process_multi_author_search',
+            'core.search_modify_url_parameters' => 'propagate_multi_author_url_params',
             'core.user_setup'  => 'load_language_on_setup',
             'core.viewtopic_assign_template_vars_before' => 'inject_template_vars',
         );
@@ -112,5 +113,15 @@ class main_listener implements EventSubscriberInterface
         if (!empty($author_ids)) {
             $event['author_id_ary'] = $author_ids;
         }       
+    }
+
+    public function propagate_multi_author_url_params($event)
+    {
+        $author_ids = $this->request->variable('author_ids', array(0));
+        if (!empty($author_ids)) {
+            foreach ($author_ids as $author_id) {
+                $event['u_search'] .= '&amp;author_ids[]=' . $author_id;
+            }
+        }
     }
 }
