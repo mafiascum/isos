@@ -27,4 +27,5 @@ $lang = array_merge($lang, array(
     'ISO_SELECTED'         => 'ISO Selected',
     'GO'                   => 'Go',
     'LINK_TO_PARENT_TOPIC' => 'Back to Topic',
+    'PM_SELECTED'          => 'PM Selected',
 ));

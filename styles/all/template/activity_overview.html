@@ -4,27 +4,34 @@
   <a href="/viewtopic.php?t={{ TOPIC_ID }}">{{ lang('LINK_TO_PARENT_TOPIC') }}</a>
 </h2>
 
-<table class="table1">
-  <caption>{L_ACTIVITY_OVERVIEW}</caption>
-  <thead>
-    <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=un&sort_order={{ UN_LINK_SORT_ORDER }}">{{ lang('USERNAME') }}</a></th>
-    <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=fpt&sort_order={{ FPT_LINK_SORT_ORDER }}">{{ lang('FIRST_POST') }}</a></th>
-    <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pt&sort_order={{ PT_LINK_SORT_ORDER }}">{{ lang('LAST_POST') }}</a></th>
-    <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pt&sort_order={{ PT_LINK_SORT_ORDER }}">{{ lang('ELAPSED_TIME') }}</a></th>
-    <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pc&sort_order={{ PC_LINK_SORT_ORDER }}">{{ lang('POST_COUNT') }}</a></th>
-  </thead>
+<form action="/ucp.php?i=pm&mode=compose&action=post" method="post">
+  <table class="table1">
+    <caption>{L_ACTIVITY_OVERVIEW}</caption>
+    <thead>
+      <th><span>{{ lang('PM_SELECTED') }}</span></th>
+      <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=un&sort_order={{ UN_LINK_SORT_ORDER }}">{{ lang('USERNAME') }}</a></th>
+      <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=fpt&sort_order={{ FPT_LINK_SORT_ORDER }}">{{ lang('FIRST_POST') }}</a></th>
+      <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pt&sort_order={{ PT_LINK_SORT_ORDER }}">{{ lang('LAST_POST') }}</a></th>
+      <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pt&sort_order={{ PT_LINK_SORT_ORDER }}">{{ lang('ELAPSED_TIME') }}</a></th>
+      <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pc&sort_order={{ PC_LINK_SORT_ORDER }}">{{ lang('POST_COUNT') }}</a></th>
+    </thead>
 
-  <tbody>
-    {% for post in POSTS_BY_USER %}
-    <tr>
-      <td class="center">{{ post.USERNAME }}</td>
-      <td class="center">{{ post.FIRST_POST_TIME }}</td>
-      <td class="center">{{ post.LAST_POST_TIME }}</td>
-      <td class="center">{{ post.IDLE_TIME }}</td>
-      <td class="center">{{ post.COUNT }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <tbody>
+      {% for post in POSTS_BY_USER %}
+      <tr>
+        <td class="center"><input type="checkbox" name="address_list[u][{{ post.POSTER_ID }}]" value="bcc"></td>
+        <td class="center">{{ post.USERNAME }}</td>
+        <td class="center">{{ post.FIRST_POST_TIME }}</td>
+        <td class="center">{{ post.LAST_POST_TIME }}</td>
+        <td class="center">{{ post.IDLE_TIME }}</td>
+        <td class="center">{{ post.COUNT }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <fieldset class="display-options">
+    <input class="button2" type="submit" value="{{ lang('PM_SELECTED') }}">
+  </fieldset>
+</form>
 
 {% include 'overall_footer.html' %}

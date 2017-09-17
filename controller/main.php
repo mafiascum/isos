@@ -57,7 +57,7 @@ class main
 
     public function assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql)
     {
-        $sql = 'SELECT count(*) count, u.username, min(p.post_time) first_post_time, max(p.post_time) last_post_time
+        $sql = 'SELECT count(*) count, p.poster_id, u.username, min(p.post_time) first_post_time, max(p.post_time) last_post_time
                 FROM ' . POSTS_TABLE . ' p
                 JOIN ' . USERS_TABLE . ' u
                 ON p.poster_id = u.user_id
@@ -73,6 +73,7 @@ class main
             $idleTime = "$daysSince day" . ($daysSince==1?"":"s") . " $hoursSince hour" . ($hoursSince==1?"":"s");
             $this->template->assign_block_vars('POSTS_BY_USER', array(
                 'COUNT' => $row['count'],
+                'POSTER_ID' => $row['poster_id'],
                 'USERNAME' => $row['username'],
                 'FIRST_POST_TIME' => $this->user->format_date($row['first_post_time']),
                 'LAST_POST_TIME' => $this->user->format_date($row['last_post_time']),
