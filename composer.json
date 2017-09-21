@@ -2,7 +2,7 @@
     "name": "mafiascum/isos",
     "type": "phpbb-extension",
     "description": "Mafiascum ISOs and Activity Overview",
-    "homepage": "https://github.com/mafiascum/extensions-isos-and-activity-overview",
+    "homepage": "https://github.com/mafiascum/isos",
     "version": "0.1.0",
     "time": "2017-09-12",
     "license": "GPL-2.0",

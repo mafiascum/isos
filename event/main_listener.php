@@ -13,11 +13,6 @@ namespace mafiascum\isos\event;
  * @ignore
  */
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-function console_log( $data ){
-    echo '<script>';
-    echo 'console.log('. json_encode( $data ) .')';
-    echo '</script>';
-}
 /**
  * Event listener
  */
