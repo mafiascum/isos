@@ -1,27 +1,28 @@
 <form action="/search.php" method="get">
-<div class="dropdown-container dropdown-button-control topic-tools dropdown-right dropdown-down">
-  <span title="{{ lang('ISO_SELECTED') }}" class="button button-secondary dropdown-trigger dropdown-select dropdown-toggle">
-    {{ lang('ISO_SELECTED') }}
-    <span class="caret">
-      <i class="icon fa-sort-down fa-fw"></i>
+  <div class="dropdown-container dropdown-button-control topic-tools dropdown-right dropdown-down">
+    <span title="{{ lang('ISO_SELECTED') }}" class="button button-secondary dropdown-trigger dropdown-select dropdown-toggle">
+      {{ lang('ISO_SELECTED') }}
+      <span class="caret">
+        <i class="icon fa-sort-down fa-fw"></i>
+      </span>
     </span>
-  </span>
-  <div class="dropdown">
-    <div class="pointer">
-      <div class="pointer-inner"></div>
-    </div>
-    <div class="dropdown-contents dropdown-nonscroll">
-      <fieldset class="display-options">
-        <input type="hidden" name="author_id" value="-1">
-        <input type="hidden" name="t" value="{{ TOPIC_ID }}">
-        {% for user in TOPIC_USERS %}
-        <li>
-          <input type="checkbox" name="author_ids[]" value="{{ user.ID }}"><span>{{ user.USERNAME }}</span>
-        </li>
-        {% endfor %}
-        <hr class="dashed">
-        <input class="button2" type="submit" value="{{ lang('GO') }}">
-      </fieldset>
+    <div class="dropdown">
+      <div class="pointer">
+        <div class="pointer-inner"></div>
+      </div>
+      <div class="dropdown-contents dropdown-nonscroll">
+        <fieldset class="display-options">
+          <input type="hidden" name="author_id" value="-1">
+          <input type="hidden" name="t" value="{{ TOPIC_ID }}">
+          {% for user in TOPIC_USERS %}
+          <li>
+            <input type="checkbox" name="author_ids[]" value="{{ user.ID }}"><span>{{ user.USERNAME }}</span>
+          </li>
+          {% endfor %}
+          <hr class="dashed">
+          <input class="button2" type="submit" value="{{ lang('GO') }}">
+        </fieldset>
+      </div>
     </div>
   </div>
-</div>
+</form>
