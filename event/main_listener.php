@@ -29,7 +29,7 @@ class main_listener implements EventSubscriberInterface
     protected $request;
 
     /* @var \phpbb\db\driver\driver */
-	protected $db;
+    protected $db;
 
     static public function getSubscribedEvents()
     {
@@ -38,6 +38,7 @@ class main_listener implements EventSubscriberInterface
             'core.search_modify_url_parameters' => 'propagate_multi_author_url_params',
             'core.user_setup'  => 'load_language_on_setup',
             'core.viewtopic_assign_template_vars_before' => 'inject_template_vars',
+            'core.viewtopic_modify_post_row' => 'viewtopic_modify_post_row',
         );
     }
 
@@ -118,5 +119,17 @@ class main_listener implements EventSubscriberInterface
                 $event['u_search'] .= '&amp;author_ids[]=' . $author_id;
             }
         }
+    }
+
+    public function viewtopic_modify_post_row($event) {
+
+        $topic_id = $event['topic_data']['topic_id'];
+        $poster_id = $event['poster_id'];
+
+        $post_row = $event['post_row'];
+
+        $post_row['ISO_URL'] = "./search.php?author_id=-1&t=" . $topic_id . "&author_ids%5B%5D=" . $poster_id;
+
+        $event['post_row'] = $post_row;
     }
 }
