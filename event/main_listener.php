@@ -30,6 +30,9 @@ class main_listener implements EventSubscriberInterface
 
     /* @var \phpbb\db\driver\driver */
     protected $db;
+    
+    /* @var \phpbb\user */
+    protected $user;
 
     static public function getSubscribedEvents()
     {
@@ -39,22 +42,26 @@ class main_listener implements EventSubscriberInterface
             'core.user_setup'  => 'load_language_on_setup',
             'core.viewtopic_assign_template_vars_before' => 'inject_template_vars',
             'core.viewtopic_modify_post_row' => 'viewtopic_modify_post_row',
+            'core.submit_post_end' => 'submit_post_end',
         );
     }
 
     /**
      * Constructor
      *
-     * @param \phpbb\controller\helper	$helper		Controller helper object
-     * @param \phpbb\template\template	$template	Template object
-     * @param \phpbb\request\request	$request	Request object
+     * @param \phpbb\controller\helper    $helper        Controller helper object
+     * @param \phpbb\template\template    $template    Template object
+     * @param \phpbb\request\request    $request    Request object
+     * @param \phpbb\db\driver\driver_interface    $db    DB object
+     * @param \phpbb\user    $user    User object
      */
-    public function __construct(\phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\request\request $request, \phpbb\db\driver\driver_interface $db)
+    public function __construct(\phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\request\request $request, \phpbb\db\driver\driver_interface $db, \phpbb\user $user)
     {
         $this->helper = $helper;
         $this->template = $template;
         $this->request = $request;
         $this->db = $db;
+        $this->user = $user;
     }
 
     public function inject_users_for_topic($topic_id)
@@ -107,6 +114,7 @@ class main_listener implements EventSubscriberInterface
     {
         $author_ids = $this->request->variable('author_ids', array(0));
         if (!empty($author_ids)) {
+            $event['sort_by_sql'] = array('t' => 'p.post_time ASC, 1');
             $event['author_id_ary'] = $author_ids;
         }       
     }
@@ -131,5 +139,29 @@ class main_listener implements EventSubscriberInterface
         $post_row['ISO_URL'] = "./search.php?author_id=-1&t=" . $topic_id . "&author_ids%5B%5D=" . $poster_id;
 
         $event['post_row'] = $post_row;
+    }
+
+    function submit_post_end($event) {
+
+        if($event['mode'] == 'edit') {
+            global $phpbb_log;
+            $subject = $event['subject'];
+            $data_ary = $event['data'];
+            $username = $event['username'];
+            $user = $this->user;
+            $poster_id = $data_ary['poster_id'];
+            
+            if ($user->data['user_id'] == $poster_id) {
+                $log_subject = ($subject) ? $subject : $data_ary['topic_title'];
+                $phpbb_log->add('mod', $user->data['user_id'], $user->ip, 'LOG_POST_EDITED', false, array(
+                    'forum_id' => $data_ary['forum_id'],
+                    'topic_id' => $data_ary['topic_id'],
+                    'post_id'  => $data_ary['post_id'],
+                    $log_subject,
+                    (!empty($username)) ? $username : $user->lang['GUEST'],
+                    $data_ary['post_edit_reason']
+                ));
+            }
+        }
     }
 }
