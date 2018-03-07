@@ -2,6 +2,8 @@
 
 use \Symfony\Component\HttpFoundation\Response;
 
+use \mafiascum\privateTopics\Utils;
+
 namespace mafiascum\isos\controller;
 
 class main
@@ -24,6 +26,9 @@ class main
     /* @var \phpbb\user */
 	protected $user;
 
+    /* @var \phpbb\auth\auth */
+    protected $auth;
+
     /* @var \phpbb\request\request */
     protected $request;
 
@@ -36,8 +41,10 @@ class main
      * @param \phpbb\template\template  $template
      * @param \phpbb\db\driver\driver   $db
      * @param \phpbb\user               $user
+     * @param \phpbb\auth\auth          $auth
+     * @param \phpbb\request\request    $request
      */
-    public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\language\language $language, \phpbb\template\template $template,	\phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\request\request $request)
+    public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\language\language $language, \phpbb\template\template $template,	\phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\auth\auth $auth, \phpbb\request\request $request)
     {
         $this->config   = $config;
         $this->helper   = $helper;
@@ -45,6 +52,7 @@ class main
         $this->template = $template;
         $this->db       = $db;
         $this->user     = $user;
+        $this->auth     = $auth;
         $this->request  = $request;
 
         $this->sort_type_map = array(
@@ -101,6 +109,8 @@ class main
      */
     public function handle($topic_id)
     {
+        global $table_prefix;
+        
         $sort_type = $this->request->variable('sort_type', 'pt');
         $sort_order = $this->request->variable('sort_order', 'a');
 
@@ -108,7 +118,29 @@ class main
         $sort_order_sql = $sort_order == 'd' ? 'DESC' : 'ASC';
 
         if (!$topic_id) {
-            throw new \phpbb\exception\http_exception(400, 'NO_TOPIC', $topic_id);
+            trigger_error('NO_TOPIC');
+        }
+
+        $sql = 'SELECT forum_id FROM ' . $table_prefix . 'topics
+                WHERE topic_id = ' . $topic_id;
+
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+
+        $forum_id = $row['forum_id'];
+
+        if (!$forum_id) {
+            trigger_error('NO_TOPIC');
+        }
+
+        if (!\mafiascum\privateTopics\Utils::is_user_authorized_for_topic(
+            $this->db,
+            $this->auth,
+            $this->user->data['user_id'],
+            $forum_id,
+            $topic_id
+        )) {
+            trigger_error('NO_TOPIC');
         }
 
         $this->assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql);
