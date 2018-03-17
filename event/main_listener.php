@@ -133,7 +133,6 @@ class main_listener implements EventSubscriberInterface
 
         $topic_id = $event['topic_data']['topic_id'];
         $poster_id = $event['poster_id'];
-
         $post_row = $event['post_row'];
 
         $post_row['ISO_URL'] = "./search.php?author_id=-1&t=" . $topic_id . "&author_ids%5B%5D=" . $poster_id;

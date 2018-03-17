@@ -24,7 +24,7 @@
         <td class="center">{{ post.FIRST_POST_TIME }}</td>
         <td class="center">{{ post.LAST_POST_TIME }}</td>
         <td class="center">{{ post.IDLE_TIME }}</td>
-        <td class="center">{{ post.COUNT }}</td>
+        <td class="center"><a href="{{ post.ISO_URL }}">{{ post.COUNT }}</a></td>
       </tr>
       {% endfor %}
     </tbody>

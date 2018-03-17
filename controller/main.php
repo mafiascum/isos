@@ -65,7 +65,8 @@ class main
 
     public function assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql)
     {
-        $sql = 'SELECT count(*) count, p.poster_id, u.username, min(p.post_time) first_post_time, max(p.post_time) last_post_time
+		global $phpbb_root_path, $phpEx;
+        $sql = 'SELECT count(*) count, p.poster_id, u.username, u.user_colour, min(p.post_time) first_post_time, max(p.post_time) last_post_time
                 FROM ' . POSTS_TABLE . ' p
                 JOIN ' . USERS_TABLE . ' u
                 ON p.poster_id = u.user_id
@@ -74,18 +75,23 @@ class main
                 ORDER BY ' . $sort_type_sql . ' ' . $sort_order_sql;
 
         $result = $this->db->sql_query($sql);
+		
         while ($row = $this->db->sql_fetchrow($result))
         {
             $daysSince = (int) ((time() - $row['last_post_time']) / 60 / 60 / 24);
             $hoursSince = (int) ((time() - $row['first_post_time']) / 60 / 60) % 24;
-            $idleTime = "$daysSince day" . ($daysSince==1?"":"s") . " $hoursSince hour" . ($hoursSince==1?"":"s");
+			$idleTime = "$daysSince day" . ($daysSince==1?"":"s") . " $hoursSince hour" . ($hoursSince==1?"":"s");
+			$poster_id = $row['poster_id'];
+			$isoUrl = append_sid("{$phpbb_root_path}search.{$phpEx}", "author_id=-1&t={$topic_id}&author_ids%5B%5D={$poster_id}");
+
             $this->template->assign_block_vars('POSTS_BY_USER', array(
                 'COUNT' => $row['count'],
                 'POSTER_ID' => $row['poster_id'],
-                'USERNAME' => $row['username'],
+                'USERNAME' => get_username_string('full', $row['poster_id'], $row['username'], $row['user_colour']),
                 'FIRST_POST_TIME' => $this->user->format_date($row['first_post_time']),
                 'LAST_POST_TIME' => $this->user->format_date($row['last_post_time']),
-                'IDLE_TIME' => $idleTime,
+				'IDLE_TIME' => $idleTime,
+				'ISO_URL' => $isoUrl,
             ));
         }
         $this->db->sql_freeresult($result);
