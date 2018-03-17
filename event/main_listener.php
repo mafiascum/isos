@@ -66,6 +66,7 @@ class main_listener implements EventSubscriberInterface
 
     public function inject_users_for_topic($topic_id)
     {
+		global $phpbb_root_path, $phpEx;
         $sql = 'SELECT DISTINCT p.poster_id, u.username
                 FROM ' . POSTS_TABLE . ' p
                 JOIN ' . USERS_TABLE . ' u
@@ -80,8 +81,12 @@ class main_listener implements EventSubscriberInterface
                 'ID'       => $row['poster_id'],
                 'USERNAME' => $row['username'],
             ));
-        }
-        $this->db->sql_freeresult($result);
+		}
+		$this->db->sql_freeresult($result);
+		
+		$this->template->assign_vars(array(
+			'U_ISO_BASE_URL'	=> append_sid("{$phpbb_root_path}search.{$phpEx}"),
+		));
     }
 
     public function inject_template_vars($event)
@@ -131,11 +136,12 @@ class main_listener implements EventSubscriberInterface
 
     public function viewtopic_modify_post_row($event) {
 
+		global $phpbb_root_path, $phpEx;
         $topic_id = $event['topic_data']['topic_id'];
         $poster_id = $event['poster_id'];
         $post_row = $event['post_row'];
 
-        $post_row['ISO_URL'] = "./search.php?author_id=-1&t=" . $topic_id . "&author_ids%5B%5D=" . $poster_id;
+        $post_row['ISO_URL'] = append_sid("{$phpbb_root_path}search.{$phpEx}", "author_id=-1&t={$topic_id}&author_ids%5B%5D={$poster_id}");
 
         $event['post_row'] = $post_row;
     }
