@@ -44,6 +44,9 @@ class main_listener implements EventSubscriberInterface
             'core.viewtopic_modify_page_title' => 'viewtopic_modify_page_title',
             'core.viewtopic_modify_post_row' => 'viewtopic_modify_post_row',
             'core.submit_post_end' => 'submit_post_end',
+			'core.ucp_profile_modify_signature' => 'ucp_profile_modify_signature',
+			'core.ucp_profile_modify_signature_sql_ary' => 'ucp_profile_modify_signature_sql_ary',
+			'core.acp_board_config_edit_add' => 'acp_board_config_edit_add',
         );
     }
 
@@ -205,5 +208,61 @@ class main_listener implements EventSubscriberInterface
                 ));
             }
         }
-    }
+	}
+
+	function ucp_profile_modify_signature_sql_ary($event) {
+		global $phpbb_container, $config;
+		$utils = $phpbb_container->get('text_formatter.utils');
+		$parser = $phpbb_container->get('text_formatter.parser');
+		$sql_ary = $event['sql_ary'];
+
+//		$min_lines_to_hide = 4;
+		$disabled_tags = explode("|", $config['disabled_sig_bbcodes']);
+		$text = $utils->unparse($sql_ary['user_sig']);
+
+		foreach($disabled_tags as $disabled_tag) {
+			$parser->disable_bbcode($disabled_tag);
+		}
+
+//		$signature_line_length = $this->calculate_signature_line_length($text);
+
+		$xml = $parser->parse($text);
+
+		$sql_ary['user_sig'] = $xml;
+		$event['sql_ary'] = $sql_ary;
+	}
+
+	function calculate_signature_line_length($text) {
+		return substr_count($text, "\n") + 1;
+	}
+
+	function acp_board_config_edit_add($event) {
+		$mode = $event['mode'];
+
+		switch($mode) {
+			case 'signature':
+				$display_vars = $event['display_vars'];
+				$vars = $display_vars['vars'];
+				$keys = array_keys($vars);
+		
+				$disabled_sig_bbcodes = array(
+					'lang' => 'DISABLED_SIG_BBCODES',
+					'validate' => 'string',
+					'type' => 'text:40:150',
+					'explain' => true
+				);
+				
+				$arr_length = count($vars);
+		
+				$vars = array_merge(
+					array_slice($vars, 0, $arr_length - 1),
+					array('disabled_sig_bbcodes' => $disabled_sig_bbcodes),
+					array_slice($vars, $arr_length - 1)
+				);
+		
+				$display_vars['vars'] = $vars;
+				$event['display_vars'] = $display_vars;
+				break;
+		}
+	}
 }
