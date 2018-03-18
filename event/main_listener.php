@@ -41,6 +41,7 @@ class main_listener implements EventSubscriberInterface
             'core.search_modify_url_parameters' => 'propagate_multi_author_url_params',
             'core.user_setup'  => 'load_language_on_setup',
             'core.viewtopic_assign_template_vars_before' => 'inject_template_vars',
+            'core.viewtopic_modify_page_title' => 'viewtopic_modify_page_title',
             'core.viewtopic_modify_post_row' => 'viewtopic_modify_post_row',
             'core.submit_post_end' => 'submit_post_end',
         );
@@ -66,7 +67,7 @@ class main_listener implements EventSubscriberInterface
 
     public function inject_users_for_topic($topic_id)
     {
-		global $phpbb_root_path, $phpEx;
+        global $phpbb_root_path, $phpEx;
         $sql = 'SELECT DISTINCT p.poster_id, u.username
                 FROM ' . POSTS_TABLE . ' p
                 JOIN ' . USERS_TABLE . ' u
@@ -81,12 +82,25 @@ class main_listener implements EventSubscriberInterface
                 'ID'       => $row['poster_id'],
                 'USERNAME' => $row['username'],
             ));
-		}
-		$this->db->sql_freeresult($result);
-		
-		$this->template->assign_vars(array(
-			'U_ISO_BASE_URL'	=> append_sid("{$phpbb_root_path}search.{$phpEx}"),
-		));
+        }
+        $this->db->sql_freeresult($result);
+        
+        $this->template->assign_vars(array(
+            'U_ISO_BASE_URL'    => append_sid("{$phpbb_root_path}search.{$phpEx}"),
+        ));
+    }
+    
+    public function viewtopic_modify_page_title($event) {
+
+        $topic_id = $event['topic_data']['topic_id'];
+        $forum_id = $event['forum_id'];
+        $start = $event['start'];
+        $seo = $this->create_viewtopic_seo($topic_id, $forum_id, $start);
+
+        $this->template->assign_vars(array(
+            'U_CANONICAL' => $seo['canonical'],
+            'ROBOTS' => $seo['robots'],
+        ));
     }
 
     public function inject_template_vars($event)
@@ -96,7 +110,30 @@ class main_listener implements EventSubscriberInterface
         $this->template->assign_vars(array(
             'U_ACTIVITY_OVERVIEW' => $this->helper->route('activity_overview_route', array('topic_id' => $topic_id))
         ));
+        
         $this->inject_users_for_topic($topic_id);
+    }
+
+    function create_viewtopic_seo($topic_id, $forum_id, $start)
+    {
+        global $config, $phpEx, $phpbb_root_path;
+
+        if($start % $config['posts_per_page'] != 0)
+            return $this->create_viewtopic_default_seo();
+        if(request_var('activity_overview', '') || request_var('vote_id', '') || request_var('st', '') || request_var('sk', '') || request_var('sd', '') || request_var('ppp', '') || request_var('p', '') || !empty(request_var('user_select', array('' => 0))))
+            return $this->create_viewtopic_default_seo();
+        
+        return array(
+            'canonical'    => $config['server_protocol'] . $config['server_name'] . $config['script_path'] . "/viewtopic.$phpEx?" . (($forum_id) ? "f=$forum_id&" : "") . "t=$topic_id" . ($start == 0 ? "" : "&start=$start"),
+            'robots'    => 'INDEX, FOLLOW'
+        );
+    }
+
+    function create_viewtopic_default_seo() {
+        return array(
+            'canonical'    => '',
+            'robots'    => 'NOINDEX, FOLLOW'
+        );
     }
 
     /**
@@ -136,7 +173,7 @@ class main_listener implements EventSubscriberInterface
 
     public function viewtopic_modify_post_row($event) {
 
-		global $phpbb_root_path, $phpEx;
+        global $phpbb_root_path, $phpEx;
         $topic_id = $event['topic_data']['topic_id'];
         $poster_id = $event['poster_id'];
         $post_row = $event['post_row'];
