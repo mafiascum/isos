@@ -119,6 +119,9 @@ class main_listener implements EventSubscriberInterface
 		if(count($isolation_author_ids) > 0) {
 			$event['base_url'] = $event['base_url'] . '&user_select%5B%5D=' . implode('&user_select%5B%5D=', $isolation_author_ids);
 		}
+		if($this->has_parameterized_posts_per_page()) {
+			$event['base_url'] = $event['base_url'] . '&ppp=' . $this->get_parameterized_posts_per_page();
+		}
 
         $this->template->assign_vars(array(
             'U_ACTIVITY_OVERVIEW' => $this->helper->route('activity_overview_route', array('topic_id' => $topic_id))
@@ -343,11 +346,24 @@ class main_listener implements EventSubscriberInterface
 	}
 
 	function viewtopic_before_f_read_check($event) {
+		global $config;
 
 		if(!empty($this->get_isolation_author_ids())) {
-			global $config;
 			$config['posts_per_page'] = 200;
 		}
+
+		if($this->has_parameterized_posts_per_page()) {
+			$config['posts_per_page'] = $this->get_parameterized_posts_per_page();
+		}
+	}
+
+	function has_parameterized_posts_per_page() {
+		$posts_per_page = $this->request->variable('ppp', '');
+		return !empty($posts_per_page) && is_numeric($posts_per_page);
+	}
+
+	function get_parameterized_posts_per_page() {
+		return max(1, min(intval($this->request->variable('ppp', '')), 200));
 	}
 
 	function viewtopic_highlight_modify($event) {
