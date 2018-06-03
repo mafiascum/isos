@@ -32,13 +32,13 @@ class main_listener implements EventSubscriberInterface
     protected $db;
     
     /* @var \phpbb\user */
-    protected $user;
+	protected $user;
+
+	protected $post_id_to_post_number_map;
 
     static public function getSubscribedEvents()
     {
         return array(
-            'core.search_modify_param_before' => 'process_multi_author_search',
-            'core.search_modify_url_parameters' => 'propagate_multi_author_url_params',
             'core.user_setup'  => 'load_language_on_setup',
             'core.viewtopic_assign_template_vars_before' => 'inject_template_vars',
             'core.viewtopic_modify_page_title' => 'viewtopic_modify_page_title',
@@ -47,6 +47,10 @@ class main_listener implements EventSubscriberInterface
 			'core.ucp_profile_modify_signature' => 'ucp_profile_modify_signature',
 			'core.ucp_profile_modify_signature_sql_ary' => 'ucp_profile_modify_signature_sql_ary',
 			'core.acp_board_config_edit_add' => 'acp_board_config_edit_add',
+			'core.viewtopic_get_post_data' => 'viewtopic_get_post_data',
+			'core.viewtopic_modify_post_data' => 'viewtopic_modify_post_data',
+			'core.viewtopic_before_f_read_check' => 'viewtopic_before_f_read_check',
+			'core.viewtopic_highlight_modify' => 'viewtopic_highlight_modify',
         );
     }
 
@@ -65,7 +69,7 @@ class main_listener implements EventSubscriberInterface
         $this->template = $template;
         $this->request = $request;
         $this->db = $db;
-        $this->user = $user;
+		$this->user = $user;
     }
 
     public function inject_users_for_topic($topic_id)
@@ -83,13 +87,13 @@ class main_listener implements EventSubscriberInterface
         {
             $this->template->assign_block_vars('TOPIC_USERS', array(
                 'ID'       => $row['poster_id'],
-                'USERNAME' => $row['username'],
+				'USERNAME' => $row['username']
             ));
         }
         $this->db->sql_freeresult($result);
         
         $this->template->assign_vars(array(
-            'U_ISO_BASE_URL'    => append_sid("{$phpbb_root_path}search.{$phpEx}"),
+            'U_ISO_BASE_URL'    => append_sid("{$phpbb_root_path}viewtopic.{$phpEx}"),
         ));
     }
     
@@ -108,7 +112,13 @@ class main_listener implements EventSubscriberInterface
 
     public function inject_template_vars($event)
     {
-        $topic_id = $event['topic_id'];
+		$topic_id = $event['topic_id'];
+		
+		//Modify the base URL to fix pagination.
+		$isolation_author_ids = $this->get_isolation_author_ids();
+		if(count($isolation_author_ids) > 0) {
+			$event['base_url'] = $event['base_url'] . '&user_select%5B%5D=' . implode('&user_select%5B%5D=', $isolation_author_ids);
+		}
 
         $this->template->assign_vars(array(
             'U_ACTIVITY_OVERVIEW' => $this->helper->route('activity_overview_route', array('topic_id' => $topic_id))
@@ -155,33 +165,27 @@ class main_listener implements EventSubscriberInterface
         $event['lang_set_ext'] = $lang_set_ext;
     }
 
-    public function process_multi_author_search($event)
-    {
-        $author_ids = $this->request->variable('author_ids', array(0));
-        if (!empty($author_ids)) {
-            $event['sort_by_sql'] = array('t' => 'p.post_time ASC, 1');
-            $event['author_id_ary'] = $author_ids;
-        }       
-    }
-
-    public function propagate_multi_author_url_params($event)
-    {
-        $author_ids = $this->request->variable('author_ids', array(0));
-        if (!empty($author_ids)) {
-            foreach ($author_ids as $author_id) {
-                $event['u_search'] .= '&amp;author_ids[]=' . $author_id;
-            }
-        }
-    }
-
     public function viewtopic_modify_post_row($event) {
 
         global $phpbb_root_path, $phpEx;
-        $topic_id = $event['topic_data']['topic_id'];
+		$topic_id = $event['topic_data']['topic_id'];
+		$forum_id = $event['topic_data']['forum_id'];
         $poster_id = $event['poster_id'];
-        $post_row = $event['post_row'];
+		$post_row = $event['post_row'];
+		$row = $event['row'];
+		$start = $event['start'];
+		$post_id = $row['post_id'];
 
-        $post_row['ISO_URL'] = append_sid("{$phpbb_root_path}search.{$phpEx}", "author_id=-1&t={$topic_id}&author_ids%5B%5D={$poster_id}");
+		$is_isolation = count($this->get_isolation_author_ids()) > 0;
+		$localized_post_number = $post_row['POST_NUMBER'] - 1;
+
+		$actual_post_number = $is_isolation ? $row['actual_post_number'] : $localized_post_number;
+		$iso_post_number = $is_isolation ? $localized_post_number : '';
+
+        $post_row['ISO_URL'] = append_sid("{$phpbb_root_path}viewtopic.{$phpEx}", "p=$post_id&f=$forum_id&t={$topic_id}&user_select%5B%5D={$poster_id}#p$post_id");
+		$post_row['POST_NUMBER'] = $actual_post_number;
+		$post_row['ISO_POST_NUMBER'] = $iso_post_number;
+		$post_row['S_IS_ISOLATION'] = $is_isolation;
 
         $event['post_row'] = $post_row;
     }
@@ -263,6 +267,139 @@ class main_listener implements EventSubscriberInterface
 				$display_vars['vars'] = $vars;
 				$event['display_vars'] = $display_vars;
 				break;
+		}
+	}
+
+	function get_isolation_author_ids() {
+		return $this->request->variable('user_select', array(0));
+	}
+
+	function viewtopic_get_post_data($event) {
+		
+		global $phpbb_container, $config;
+		$phpbb_content_visibility = $phpbb_container->get('content.visibility');
+
+		$sql_ary = $event['sql_ary'];
+		$where = $sql_ary['WHERE'];
+
+		$author_ids = $this->get_isolation_author_ids();
+		
+		if(count($author_ids) <= 0) {
+			return;
+		}
+
+		$sort_key = $event['sort_key'];
+		$topic_id = $event['topic_id'];
+		$forum_id = $event['forum_id'];
+		$sql_sort_order = 'p.post_time ASC';
+		$sql_limit = $config['posts_per_page'];
+		$sql_start = $event['start'];
+
+		$sql = 'SELECT p.post_id
+				FROM ' . POSTS_TABLE . " p
+				WHERE p.topic_id = $topic_id
+				AND " . $this->db->sql_in_set('p.poster_id', $author_ids) . "
+				AND " . $phpbb_content_visibility->get_visibility_sql('post', $forum_id, 'p.') . "
+				ORDER BY $sql_sort_order";
+
+		$result = $this->db->sql_query_limit($sql, $sql_limit, $sql_start);
+		$post_list = array();
+		while ($row = $this->db->sql_fetchrow($result)) {
+			$post_list[] = $row['post_id'];
+		}
+
+		$this->db->sql_freeresult($result);
+
+		$sql_replace = $this->db->sql_in_set('p.post_id', $post_list);
+
+		$where = preg_replace('/p\.post_id\s+IN\s*\(.*?\)/', $sql_replace, $where);
+		$where = preg_replace('/p\.post_id\s*=\s*\d+/', $sql_replace, $where);
+
+		$sql_ary['WHERE'] = $where;
+		$event['sql_ary'] = $sql_ary;
+		$event['post_list'] = $post_list;
+	}
+
+	public function viewtopic_modify_post_data($event) {
+
+		global $phpbb_container;
+		$phpbb_content_visibility = $phpbb_container->get('content.visibility');
+		
+		$rowset = $event['rowset'];
+		$post_list = $event['post_list'];
+		$topic_id = $event['topic_id'];
+
+		//Record the actual post number on the post rows
+		foreach($rowset as $i => $row) {
+
+			$actual_post_number = $this->post_id_to_post_number_map[$row['post_id']];
+
+			$row['actual_post_number'] = $actual_post_number;
+
+			$rowset[$i] = $row;
+		}
+
+		$event['rowset'] = $rowset;
+	}
+
+	function viewtopic_before_f_read_check($event) {
+
+		if(!empty($this->get_isolation_author_ids())) {
+			global $config;
+			$config['posts_per_page'] = 200;
+		}
+	}
+
+	function viewtopic_highlight_modify($event) {
+		if(!empty($this->get_isolation_author_ids())) {
+
+			global $phpbb_container;
+			$phpbb_content_visibility = $phpbb_container->get('content.visibility');
+			$topic_id = $event['topic_data']['topic_id'];
+			$start_post_id = $this->request->variable('p', '');
+
+			//Let's get the real post numbers. Kison, 2011-06-19
+			$this->db->sql_query('SET @post_count := -1;');
+
+			$sql = 'SELECT tmp.post_id, tmp.post_number FROM
+			(
+			SELECT
+				post_id,
+				poster_id,
+				@post_count := @post_count + 1 AS post_number
+			FROM ' . POSTS_TABLE . "
+			WHERE topic_id=$topic_id
+			AND " . $phpbb_content_visibility->get_visibility_sql('post', $forum_id, 'p.') . "
+			ORDER BY post_time ASC
+			) AS tmp
+			WHERE " . $this->db->sql_in_set("tmp.poster_id", $this->get_isolation_author_ids(), false, false);
+			
+			$result = $this->db->sql_query($sql);
+
+			$this->post_id_to_post_number_map = array();
+			$total_posts = 0;
+			$find_start_post = !empty($start_post_id) && empty($this->request->variable('start', ''));
+			$found_start_post = $find_start_post;
+			$start = 0;
+
+			while($row = $this->db->sql_fetchrow()) {
+
+				$this->post_id_to_post_number_map[(int)$row['post_id']] = $row['post_number'];
+
+				if($found_start_post && $start_post_id == $row['post_id']) {
+					$start = $total_posts;
+					$found_start_post = false;
+				}
+
+				$total_posts++;
+			}
+
+			$this->db->sql_freeresult($result);
+
+			$event['total_posts'] = $total_posts;
+			if($find_start_post) {
+				$event['start'] = $start;
+			}
 		}
 	}
 }
