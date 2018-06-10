@@ -44,7 +44,6 @@ class main_listener implements EventSubscriberInterface
             'core.viewtopic_modify_page_title' => 'viewtopic_modify_page_title',
             'core.viewtopic_modify_post_row' => 'viewtopic_modify_post_row',
             'core.submit_post_end' => 'submit_post_end',
-			'core.ucp_profile_modify_signature' => 'ucp_profile_modify_signature',
 			'core.ucp_profile_modify_signature_sql_ary' => 'ucp_profile_modify_signature_sql_ary',
 			'core.acp_board_config_edit_add' => 'acp_board_config_edit_add',
 			'core.viewtopic_get_post_data' => 'viewtopic_get_post_data',
