@@ -73,19 +73,29 @@ class main_listener implements EventSubscriberInterface
 
     public function inject_users_for_topic($topic_id)
     {
-        global $phpbb_root_path, $phpEx;
-        $sql = 'SELECT DISTINCT p.poster_id, u.username
-                FROM ' . POSTS_TABLE . ' p
-                JOIN ' . USERS_TABLE . ' u
-                ON p.poster_id = u.user_id
-                WHERE p.topic_id = ' . $topic_id . '
-                ORDER BY lower(u.username)';
+		global $phpbb_root_path, $phpEx;
+		$sql = 'SELECT DISTINCT poster_id
+				FROM ' . POSTS_TABLE . '
+				WHERE topic_id=' . $topic_id;
+
+		$distinct_posters = Array();
+		$result = $this->db->sql_query($sql);
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$distinct_posters[] = $row['poster_id'];
+		}
+		$this->db->sql_freeresult($result);
+
+		$sql = 'SELECT username, user_id
+				FROM phpbb_users
+				WHERE ' . $this->db->sql_in_set('user_id', $distinct_posters) . '
+				ORDER BY LOWER(username)';
 
         $result = $this->db->sql_query($sql);
         while ($row = $this->db->sql_fetchrow($result))
         {
             $this->template->assign_block_vars('TOPIC_USERS', array(
-                'ID'       => $row['poster_id'],
+                'ID'       => $row['user_id'],
 				'USERNAME' => $row['username']
             ));
         }
