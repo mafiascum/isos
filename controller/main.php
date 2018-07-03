@@ -82,7 +82,7 @@ class main
             $hoursSince = (int) ((time() - $row['first_post_time']) / 60 / 60) % 24;
 			$idleTime = "$daysSince day" . ($daysSince==1?"":"s") . " $hoursSince hour" . ($hoursSince==1?"":"s");
 			$poster_id = $row['poster_id'];
-			$isoUrl = append_sid("{$phpbb_root_path}search.{$phpEx}", "author_id=-1&t={$topic_id}&author_ids%5B%5D={$poster_id}");
+			$isoUrl = append_sid("{$phpbb_root_path}viewtopic.{$phpEx}", "t={$topic_id}&user_select%5B%5D={$poster_id}");
 
             $this->template->assign_block_vars('POSTS_BY_USER', array(
                 'COUNT' => $row['count'],
