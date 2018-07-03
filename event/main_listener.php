@@ -378,7 +378,7 @@ class main_listener implements EventSubscriberInterface
 	function viewtopic_highlight_modify($event) {
 		if(!empty($this->get_isolation_author_ids())) {
 
-			global $phpbb_container;
+			global $phpbb_container, $config;
 			$phpbb_content_visibility = $phpbb_container->get('content.visibility');
 			$topic_id = $event['topic_data']['topic_id'];
 			$start_post_id = $this->request->variable('p', '');
@@ -423,7 +423,7 @@ class main_listener implements EventSubscriberInterface
 
 			$event['total_posts'] = $total_posts;
 			if($find_start_post) {
-				$event['start'] = $start;
+				$event['start'] = $start - ($start % $config['posts_per_page']);
 			}
 		}
 	}
