@@ -120,7 +120,7 @@ class main
         $sort_type = $this->request->variable('sort_type', 'pt');
         $sort_order = $this->request->variable('sort_order', 'a');
 
-        $sort_type_sql = $this->sort_type_map[$sort_type_opt] ?? 'max(p.post_time)';
+        $sort_type_sql = $this->sort_type_map[$sort_type] ?? 'max(p.post_time)';
         $sort_order_sql = $sort_order == 'd' ? 'DESC' : 'ASC';
 
         if (!$topic_id) {
