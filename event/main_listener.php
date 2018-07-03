@@ -392,10 +392,10 @@ class main_listener implements EventSubscriberInterface
 				post_id,
 				poster_id,
 				@post_count := @post_count + 1 AS post_number
-			FROM ' . POSTS_TABLE . "
-			WHERE topic_id=$topic_id
+			FROM ' . POSTS_TABLE . " p
+			WHERE p.topic_id=$topic_id
 			AND " . $phpbb_content_visibility->get_visibility_sql('post', $forum_id, 'p.') . "
-			ORDER BY post_time ASC
+			ORDER BY p.post_time ASC
 			) AS tmp
 			WHERE " . $this->db->sql_in_set("tmp.poster_id", $this->get_isolation_author_ids(), false, false);
 			
