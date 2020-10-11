@@ -2,7 +2,7 @@
 
 use \Symfony\Component\HttpFoundation\Response;
 
-use \mafiascum\privateTopics\Utils;
+use \mafiascum\privatetopics\Utils;
 
 namespace mafiascum\isos\controller;
 
@@ -139,7 +139,7 @@ class main
             trigger_error('NO_TOPIC');
         }
 
-        if (!\mafiascum\privateTopics\Utils::is_user_authorized_for_topic(
+        if (!\mafiascum\privatetopics\Utils::is_user_authorized_for_topic(
             $this->db,
             $this->auth,
             $this->user->data['user_id'],
