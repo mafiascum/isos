@@ -27,5 +27,10 @@ $lang = array_merge($lang, array(
     'ISO_SELECTED'         => 'ISO Selected',
     'GO'                   => 'Go',
     'LINK_TO_PARENT_TOPIC' => 'Back to Topic',
-    'PM_SELECTED'          => 'PM Selected',
+	'PM_SELECTED'          => 'PM Selected',
+	'ISO'                  => 'ISO',
+	'ISOLATION_NR_LABEL'   => 'isolation',
+	'POST_NUMBER_LABEL'    => 'Post',
+	'DISABLED_SIG_BBCODES' => 'Disabled signature bbcodes',
+	'DISABLED_SIG_BBCODES_EXPLAIN' => 'The bbcode tags that are disallowed from being used in user signatures.',
 ));

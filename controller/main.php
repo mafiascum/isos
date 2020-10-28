@@ -2,6 +2,8 @@
 
 use \Symfony\Component\HttpFoundation\Response;
 
+use \mafiascum\privatetopics\Utils;
+
 namespace mafiascum\isos\controller;
 
 class main
@@ -24,6 +26,9 @@ class main
     /* @var \phpbb\user */
 	protected $user;
 
+    /* @var \phpbb\auth\auth */
+    protected $auth;
+
     /* @var \phpbb\request\request */
     protected $request;
 
@@ -36,8 +41,10 @@ class main
      * @param \phpbb\template\template  $template
      * @param \phpbb\db\driver\driver   $db
      * @param \phpbb\user               $user
+     * @param \phpbb\auth\auth          $auth
+     * @param \phpbb\request\request    $request
      */
-    public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\language\language $language, \phpbb\template\template $template,	\phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\request\request $request)
+    public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\language\language $language, \phpbb\template\template $template,	\phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\auth\auth $auth, \phpbb\request\request $request)
     {
         $this->config   = $config;
         $this->helper   = $helper;
@@ -45,6 +52,7 @@ class main
         $this->template = $template;
         $this->db       = $db;
         $this->user     = $user;
+        $this->auth     = $auth;
         $this->request  = $request;
 
         $this->sort_type_map = array(
@@ -57,7 +65,8 @@ class main
 
     public function assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql)
     {
-        $sql = 'SELECT count(*) count, p.poster_id, u.username, min(p.post_time) first_post_time, max(p.post_time) last_post_time
+		global $phpbb_root_path, $phpEx;
+        $sql = 'SELECT count(*) count, p.poster_id, u.username, u.user_colour, min(p.post_time) first_post_time, max(p.post_time) last_post_time
                 FROM ' . POSTS_TABLE . ' p
                 JOIN ' . USERS_TABLE . ' u
                 ON p.poster_id = u.user_id
@@ -66,18 +75,23 @@ class main
                 ORDER BY ' . $sort_type_sql . ' ' . $sort_order_sql;
 
         $result = $this->db->sql_query($sql);
+		
         while ($row = $this->db->sql_fetchrow($result))
         {
             $daysSince = (int) ((time() - $row['last_post_time']) / 60 / 60 / 24);
             $hoursSince = (int) ((time() - $row['first_post_time']) / 60 / 60) % 24;
-            $idleTime = "$daysSince day" . ($daysSince==1?"":"s") . " $hoursSince hour" . ($hoursSince==1?"":"s");
+			$idleTime = "$daysSince day" . ($daysSince==1?"":"s") . " $hoursSince hour" . ($hoursSince==1?"":"s");
+			$poster_id = $row['poster_id'];
+			$isoUrl = append_sid("{$phpbb_root_path}viewtopic.{$phpEx}", "t={$topic_id}&user_select%5B%5D={$poster_id}");
+
             $this->template->assign_block_vars('POSTS_BY_USER', array(
                 'COUNT' => $row['count'],
                 'POSTER_ID' => $row['poster_id'],
-                'USERNAME' => $row['username'],
+                'USERNAME' => get_username_string('full', $row['poster_id'], $row['username'], $row['user_colour']),
                 'FIRST_POST_TIME' => $this->user->format_date($row['first_post_time']),
                 'LAST_POST_TIME' => $this->user->format_date($row['last_post_time']),
-                'IDLE_TIME' => $idleTime,
+				'IDLE_TIME' => $idleTime,
+				'ISO_URL' => $isoUrl,
             ));
         }
         $this->db->sql_freeresult($result);
@@ -101,14 +115,38 @@ class main
      */
     public function handle($topic_id)
     {
+        global $table_prefix;
+        
         $sort_type = $this->request->variable('sort_type', 'pt');
         $sort_order = $this->request->variable('sort_order', 'a');
 
-        $sort_type_sql = $this->sort_type_map[$sort_type_opt] ?? 'max(p.post_time)';
+        $sort_type_sql = $this->sort_type_map[$sort_type] ?? 'max(p.post_time)';
         $sort_order_sql = $sort_order == 'd' ? 'DESC' : 'ASC';
 
         if (!$topic_id) {
-            throw new \phpbb\exception\http_exception(400, 'NO_TOPIC', $topic_id);
+            trigger_error('NO_TOPIC');
+        }
+
+        $sql = 'SELECT forum_id FROM ' . $table_prefix . 'topics
+                WHERE topic_id = ' . $topic_id;
+
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+
+        $forum_id = $row['forum_id'];
+
+        if (!$forum_id) {
+            trigger_error('NO_TOPIC');
+        }
+
+        if (!\mafiascum\privatetopics\Utils::is_user_authorized_for_topic(
+            $this->db,
+            $this->auth,
+            $this->user->data['user_id'],
+            $forum_id,
+            $topic_id
+        )) {
+            trigger_error('NO_TOPIC');
         }
 
         $this->assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql);
