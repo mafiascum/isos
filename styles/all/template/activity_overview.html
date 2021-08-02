@@ -14,6 +14,7 @@
       <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pt&sort_order={{ PT_LINK_SORT_ORDER }}">{{ lang('LAST_POST') }}</a></th>
       <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pt&sort_order={{ PT_LINK_SORT_ORDER }}">{{ lang('ELAPSED_TIME') }}</a></th>
       <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pc&sort_order={{ PC_LINK_SORT_ORDER }}">{{ lang('POST_COUNT') }}</a></th>
+      <th>{{ lang('VLA_ENDS') }}</th>
     </thead>
 
     <tbody>
@@ -25,6 +26,7 @@
         <td class="center">{{ post.LAST_POST_TIME }}</td>
         <td class="center">{{ post.IDLE_TIME }}</td>
         <td class="center"><a href="{{ post.ISO_URL }}">{{ post.COUNT }}</a></td>
+        <td class="center">{{ post.VLA_END }}</td>
       </tr>
       {% endfor %}
     </tbody>

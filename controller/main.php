@@ -63,10 +63,32 @@ class main
         );
     }
 
+    private static function is_user_vla($vlaStartField, $vlaEndField) {
+        $vlaStartTime = self::get_vla_start_time($vlaStartField);
+        $vlaEndTime = self::get_vla_end_time($vlaEndField);
+        
+        if(is_null($vlaStartTime) || is_null($vlaEndTime))
+            return false;
+        
+        $currentTime = time();
+        
+        return ($currentTime >= $vlaStartTime && $currentTime <= $vlaEndTime);
+    }
+
+    private static function get_vla_start_time($vlaStartField){
+        $vlaStartDateArray = explode('-', $vlaStartField);
+        return count($vlaStartDateArray) < 3 ? NULL : mktime(0, 0, 0, $vlaStartDateArray[1], $vlaStartDateArray[0], $vlaStartDateArray[2]);
+    }
+
+    private static function get_vla_end_time($vlaEndField) {
+        $vlaEndDateArray = explode('-', $vlaEndField);
+        return count($vlaEndDateArray) < 3 ? NULL : mktime(23, 59, 59, $vlaEndDateArray[1], $vlaEndDateArray[0], $vlaEndDateArray[2]);
+    }
+
     public function assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql)
     {
 		global $phpbb_root_path, $phpEx;
-        $sql = "SELECT count(*) count, p.poster_id, u.username, u.user_colour, Coalesce(ppfo.lang_value, 'Unspecified') as pronoun, min(p.post_time) first_post_time, max(p.post_time) last_post_time"
+        $sql = "SELECT count(*) count, p.poster_id, u.username, u.user_colour, Coalesce(ppfo.lang_value, 'Unspecified') as pronoun, min(p.post_time) first_post_time, max(p.post_time) last_post_time, u.user_vla_start, u.user_vla_till"
                . " FROM " . POSTS_TABLE . " p"
                . " JOIN " . USERS_TABLE . " u"
                . " ON p.poster_id = u.user_id"
@@ -86,6 +108,8 @@ class main
 			$idleTime = "$daysSince day" . ($daysSince==1?"":"s") . " $hoursSince hour" . ($hoursSince==1?"":"s");
 			$poster_id = $row['poster_id'];
 			$isoUrl = append_sid("{$phpbb_root_path}viewtopic.{$phpEx}", "t={$topic_id}&user_select%5B%5D={$poster_id}");
+            $is_vla = self::is_user_vla($row['user_vla_start'], $row['user_vla_till']);
+            $vlaEndTimeStr = $is_vla ? strftime("%B %d %Y", self::get_vla_end_time($row['user_vla_till'])) : "";
 
             $this->template->assign_block_vars('POSTS_BY_USER', array(
                 'COUNT' => $row['count'],
@@ -95,6 +119,7 @@ class main
                 'LAST_POST_TIME' => $this->user->format_date($row['last_post_time']),
 				'IDLE_TIME' => $idleTime,
 				'ISO_URL' => $isoUrl,
+                'VLA_END'	 => $vlaEndTimeStr,
             ));
         }
         $this->db->sql_freeresult($result);
