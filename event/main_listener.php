@@ -53,6 +53,7 @@ class main_listener implements EventSubscriberInterface
 			'core.viewtopic_modify_post_data' => 'viewtopic_modify_post_data',
 			'core.viewtopic_before_f_read_check' => 'viewtopic_before_f_read_check',
 			'core.viewtopic_highlight_modify' => 'viewtopic_highlight_modify',
+			'core.page_header' => 'page_header_after',
         );
     }
 
@@ -75,7 +76,14 @@ class main_listener implements EventSubscriberInterface
 		$this->user = $user;
 		$this->language = $language;
 	}
-	
+	public function page_header_after($event)
+	{
+		global $forum_id, $topic_id;
+		if(isset($forum_id) || isset($topic_id))
+		{
+			$event['display_online_list'] = false;
+		}
+	}
     public function inject_users_for_topic($topic_id)
     {
 		global $phpbb_root_path, $phpEx;
