@@ -4,7 +4,7 @@
   <a href="/viewtopic.php?t={{ TOPIC_ID }}">{{ lang('LINK_TO_PARENT_TOPIC') }}</a>
 </h2>
 
-<form action="/ucp.php?i=pm&mode=compose&action=post" method="post">
+<form class="activity-overview" action="/ucp.php?i=pm&mode=compose&action=post" method="post">
   <table class="table1">
     <caption>{L_ACTIVITY_OVERVIEW}</caption>
     <thead>
@@ -14,7 +14,7 @@
       <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pt&sort_order={{ PT_LINK_SORT_ORDER }}">{{ lang('LAST_POST') }}</a></th>
       <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pt&sort_order={{ PT_LINK_SORT_ORDER }}">{{ lang('ELAPSED_TIME') }}</a></th>
       <th><a class="postlink" href="{{ U_ACTIVITY_OVERVIEW }}?sort_type=pc&sort_order={{ PC_LINK_SORT_ORDER }}">{{ lang('POST_COUNT') }}</a></th>
-      <th>{{ lang('VLA_ENDS') }}</th>
+      <th><span>{{ lang('VLA_ENDS') }}</span></th>
     </thead>
 
     <tbody>
@@ -32,7 +32,7 @@
     </tbody>
   </table>
   <fieldset class="display-options">
-    <input class="button2" type="submit" value="{{ lang('PM_SELECTED') }}">
+    <input class="button2 activity-overview-pm-selected" type="submit" value="{{ lang('PM_SELECTED') }}">
   </fieldset>
 </form>
 
