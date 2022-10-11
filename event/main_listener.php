@@ -100,11 +100,9 @@ class main_listener implements EventSubscriberInterface
 		$this->db->sql_freeresult($result);
 
 		//TODO if we ever have multiple localizations, this needs a little rework but I don't care atm
-		$sql = "SELECT pu.username, pu.user_id, Coalesce(ppfo.lang_value, 'Unspecified') as pronoun"
+		$sql = "SELECT pu.username, pu.user_id, ppfd.pf_user_pronoun_text as pronoun"
 				. " FROM " . USERS_TABLE . " pu"
 				. " LEFT JOIN " . PROFILE_FIELDS_DATA_TABLE . " ppfd ON pu.user_id = ppfd.user_id"
-				. " LEFT JOIN (SELECT ppfl.option_id, ppfl.lang_value FROM " . PROFILE_FIELDS_TABLE . " ppf JOIN " . PROFILE_FIELDS_LANG_TABLE . " ppfl ON ppf.field_id = ppfl.field_id WHERE ppf.field_ident = 'user_pronoun') ppfo"
-				. " ON ppfd.pf_user_pronoun = ppfo.option_id + 1"
 				. " WHERE " . $this->db->sql_in_set('pu.user_id', $distinct_posters) 
 				. " ORDER BY LOWER(pu.username)";
 
@@ -113,7 +111,7 @@ class main_listener implements EventSubscriberInterface
         {
             $this->template->assign_block_vars('TOPIC_USERS', array(
                 'ID'       => $row['user_id'],
-				'USERNAME' => $row['username'] . " (" . $row['pronoun'] . ")"
+				'USERNAME' => $row['username'] . ($row['pronoun'] == '' ? '' : (" (" . $row['pronoun'] . ")"))
             ));
         }
         $this->db->sql_freeresult($result);
@@ -213,9 +211,9 @@ class main_listener implements EventSubscriberInterface
 		$iso_post_number = $is_isolation ? $localized_post_number : '';
 
 		//pronoun additions
-		$pronoun = $event['cp_row']['row']['PROFILE_USER_PRONOUN_VALUE'] ?: $this->language->lang('UNSPECIFIED');
+		$pronoun = $event['cp_row']['row']['PROFILE_USER_PRONOUN_TEXT_VALUE'];
 
-		$post_row['POST_AUTHOR_FULL'] = get_username_string('full', $poster_id, $row['username'] . ' (' . $pronoun . ')', $row['user_colour'], $row['post_username']);
+		$post_row['POST_AUTHOR_FULL'] = get_username_string('full', $poster_id, $row['username'] . ($pronoun == '' ? '' : (' (' . $pronoun . ')')), $row['user_colour'], $row['post_username']);
         $post_row['ISO_URL'] = append_sid("{$phpbb_root_path}viewtopic.{$phpEx}", "p=$post_id&f=$forum_id&t={$topic_id}&user_select%5B%5D={$poster_id}#p$post_id");
 		$post_row['POST_NUMBER'] = $actual_post_number;
 		$post_row['ISO_POST_NUMBER'] = $iso_post_number;

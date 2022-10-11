@@ -85,16 +85,26 @@ class main
         return count($vlaEndDateArray) < 3 ? NULL : mktime(23, 59, 59, $vlaEndDateArray[1], $vlaEndDateArray[0], $vlaEndDateArray[2]);
     }
 
+    private static function format_username_with_gender($row) {
+        return get_username_string('full', $row['poster_id'], $row['username'] . ($row['pronoun'] == '' ? '' : (" (" . $row['pronoun'] . ")")), $row['user_colour']);
+    }
+
     public function assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql)
     {
 		global $phpbb_root_path, $phpEx;
-        $sql = "SELECT count(*) count, p.poster_id, u.username, u.user_colour, Coalesce(ppfo.lang_value, 'Unspecified') as pronoun, min(p.post_time) first_post_time, max(p.post_time) last_post_time, u.user_vla_start, u.user_vla_till"
+        $sql = "SELECT 
+                    count(*) count,
+                    p.poster_id,
+                    u.username,
+                    u.user_colour,
+                    ppfd.pf_user_pronoun_text as pronoun,
+                    min(p.post_time) first_post_time,
+                    max(p.post_time) last_post_time,
+                    u.user_vla_start, u.user_vla_till"
                . " FROM " . POSTS_TABLE . " p"
                . " JOIN " . USERS_TABLE . " u"
                . " ON p.poster_id = u.user_id"
-               . " LEFT JOIN " . PROFILE_FIELDS_DATA_TABLE . " ppfd ON u.user_id = ppfd.user_id"
-			   . " LEFT JOIN (SELECT ppfl.option_id, ppfl.lang_value FROM " . PROFILE_FIELDS_TABLE . " ppf JOIN " . PROFILE_FIELDS_LANG_TABLE . " ppfl ON ppf.field_id = ppfl.field_id WHERE ppf.field_ident = 'user_pronoun') ppfo"
-			   . " ON ppfd.pf_user_pronoun = ppfo.option_id + 1"
+               . " LEFT JOIN " . PROFILE_FIELDS_DATA_TABLE . " ppfd ON(u.user_id = ppfd.user_id)"
                . " WHERE p.topic_id = " . $topic_id
                . " GROUP BY p.poster_id, u.username"
                . " ORDER BY " . $sort_type_sql . " " . $sort_order_sql;
@@ -114,7 +124,7 @@ class main
             $this->template->assign_block_vars('POSTS_BY_USER', array(
                 'COUNT' => $row['count'],
                 'POSTER_ID' => $row['poster_id'],
-                'USERNAME' => get_username_string('full', $row['poster_id'], $row['username'] . " (" . $row['pronoun'] . ")", $row['user_colour']),
+                'USERNAME' => self::format_username_with_gender($row),
                 'FIRST_POST_TIME' => $this->user->format_date($row['first_post_time']),
                 'LAST_POST_TIME' => $this->user->format_date($row['last_post_time']),
 				'IDLE_TIME' => $idleTime,
