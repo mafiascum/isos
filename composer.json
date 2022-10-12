@@ -24,7 +24,7 @@
     "extra": {
         "display-name": "ISOs and Activity Overview",
         "soft-require": {
-            "phpbb/phpbb": "3.3.x-dev"
+            "phpbb/phpbb": "^3.3"
         }
     }
 }
