@@ -211,7 +211,7 @@ class main_listener implements EventSubscriberInterface
 		$iso_post_number = $is_isolation ? $localized_post_number : '';
 
 		//pronoun additions
-		$pronoun = $event['cp_row']['row']['PROFILE_USER_PRONOUN_TEXT_VALUE'];
+		$pronoun = array_key_exists('PROFILE_USER_PRONOUN_TEXT_VALUE', $event['cp_row']['row']) ? $event['cp_row']['row']['PROFILE_USER_PRONOUN_TEXT_VALUE'] : '';
 
 		$post_row['POST_AUTHOR_FULL'] = get_username_string('full', $poster_id, $row['username'] . ($pronoun == '' ? '' : (' (' . $pronoun . ')')), $row['user_colour'], $row['post_username']);
         $post_row['ISO_URL'] = append_sid("{$phpbb_root_path}viewtopic.{$phpEx}", "p=$post_id&f=$forum_id&t={$topic_id}&user_select%5B%5D={$poster_id}#p$post_id");
@@ -361,14 +361,16 @@ class main_listener implements EventSubscriberInterface
 		$post_list = $event['post_list'];
 		$topic_id = $event['topic_id'];
 
-		//Record the actual post number on the post rows
-		foreach($rowset as $i => $row) {
+		if(!is_null($this->post_id_to_post_number_map)) {
+			//Record the actual post number on the post rows
+			foreach($rowset as $i => $row) {
 
-			$actual_post_number = $this->post_id_to_post_number_map[$row['post_id']];
+				$actual_post_number = $this->post_id_to_post_number_map[$row['post_id']];
 
-			$row['actual_post_number'] = $actual_post_number;
+				$row['actual_post_number'] = $actual_post_number;
 
-			$rowset[$i] = $row;
+				$rowset[$i] = $row;
+			}
 		}
 
 		$event['rowset'] = $rowset;
