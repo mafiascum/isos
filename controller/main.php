@@ -1,10 +1,9 @@
 <?php
 
-use \Symfony\Component\HttpFoundation\Response;
-
-use \mafiascum\privatetopics\Utils;
-
 namespace mafiascum\isos\controller;
+
+use \Symfony\Component\HttpFoundation\Response;
+use \mafiascum\privatetopics\Utils;
 
 class main
 {
@@ -197,6 +196,6 @@ class main
             'U_ACTIVITY_OVERVIEW' => $this->helper->route('activity_overview_route', array('topic_id' => $topic_id)),
         ));
 
-        return $this->helper->render('activity_overview.html', $name);
+        return $this->helper->render('activity_overview.html', $this->language->lang('ACTIVITY_OVERVIEW'));
     }
 }
