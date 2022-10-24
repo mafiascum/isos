@@ -403,6 +403,7 @@ class main_listener implements EventSubscriberInterface
 			global $phpbb_container, $config;
 			$phpbb_content_visibility = $phpbb_container->get('content.visibility');
 			$topic_id = $event['topic_data']['topic_id'];
+			$forum_id = $event['topic_data']['forum_id'];
 			$start_post_id = $this->request->variable('p', '');
 
 			//Let's get the real post numbers. Kison, 2011-06-19
