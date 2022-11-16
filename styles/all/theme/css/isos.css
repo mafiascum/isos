@@ -1,0 +1,9 @@
+dd.profile-pronoun-only {
+    display: none;
+}
+
+@media (max-width: 700px) {
+    dd.profile-pronoun-only {
+        display: block;
+    }
+}

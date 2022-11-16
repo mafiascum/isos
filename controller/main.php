@@ -85,7 +85,7 @@ class main
     }
 
     private static function format_username_with_gender($row) {
-        return get_username_string('full', $row['poster_id'], $row['username'] . ($row['pronoun'] == '' ? '' : (" (" . $row['pronoun'] . ")")), $row['user_colour']);
+        return get_username_string('full', $row['poster_id'], '<span class="iso-username">' . $row['username'] . '</span><span class="iso-pronoun">' . ($row['pronoun'] == '' ? '' : (" (" . $row['pronoun'] . ")")) . '</span>', $row['user_colour']);
     }
 
     public function assign_template_for_topic_post_count($topic_id, $sort_type_sql, $sort_order_sql)

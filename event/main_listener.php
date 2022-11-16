@@ -213,7 +213,7 @@ class main_listener implements EventSubscriberInterface
 		//pronoun additions
 		$pronoun = array_key_exists('PROFILE_USER_PRONOUN_TEXT_VALUE', $event['cp_row']['row']) ? $event['cp_row']['row']['PROFILE_USER_PRONOUN_TEXT_VALUE'] : '';
 
-		$post_row['POST_AUTHOR_FULL'] = get_username_string('full', $poster_id, $row['username'] . ($pronoun == '' ? '' : (' (' . $pronoun . ')')), $row['user_colour'], $row['post_username']);
+		$post_row['PRONOUN'] = $pronoun;
         $post_row['ISO_URL'] = append_sid("{$phpbb_root_path}viewtopic.{$phpEx}", "p=$post_id&f=$forum_id&t={$topic_id}&user_select%5B%5D={$poster_id}#p$post_id");
 		$post_row['POST_NUMBER'] = $actual_post_number;
 		$post_row['ISO_POST_NUMBER'] = $iso_post_number;
