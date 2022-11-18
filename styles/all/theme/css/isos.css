@@ -1,9 +1,30 @@
+/* Pronoun field related changes to ensure that it is billed right under username and hidden elsewhere on all devices */
 dd.profile-pronoun-only {
+    display: block;
+}
+
+dd.profile-user_pronoun_text {
     display: none;
 }
 
+.postprofile dd.profile-pronoun-only {
+    position: absolute;
+    top: 20px;
+}
+
+.postprofile dd.profile-rank {
+    top: 35px;
+}
+
 @media (max-width: 700px) {
-    dd.profile-pronoun-only {
-        display: block;
+    .postprofile dd.profile-pronoun-only {
+        position: static;
     }
 }
+
+@media (min-width: 701px) {
+	.post:not(.search) .postprofile dt {
+		margin-top: 40px;
+	}
+}
+/* End Pronoun field related changes */
