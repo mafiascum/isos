@@ -1,5 +1,6 @@
 <dt class="<!-- IF postrow.RANK_TITLE or postrow.RANK_IMG -->has-profile-rank<!-- ELSE -->no-profile-rank<!-- ENDIF --> <!-- IF postrow.POSTER_AVATAR -->has-avatar<!-- ELSE -->no-avatar<!-- ENDIF --> visible">
 	<!-- IF not postrow.U_POST_AUTHOR --><strong>{postrow.POST_AUTHOR_FULL}</strong><!-- ELSE -->{postrow.POST_AUTHOR_FULL}<!-- ENDIF -->
+	<div class="profile-pronoun-only">{postrow.PRONOUN}</profile-pronoun-only>
 	<!-- IF postrow.RANK_TITLE or postrow.RANK_IMG --><div class="profile-rank visible">{postrow.RANK_TITLE}<!-- IF postrow.RANK_TITLE and postrow.RANK_IMG --><br /><!-- ENDIF -->{postrow.RANK_IMG}</div><!-- ENDIF -->
 	<div class="avatar-container">
 			<!-- IF postrow.POSTER_AVATAR -->
