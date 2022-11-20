@@ -85,7 +85,7 @@ class main_listener implements EventSubscriberInterface
 		}
 		$this->template->assign_vars(array(
 			'U_BOOKMARKS' => append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=ucp_main&amp;mode=bookmarks'),
-			'U_SUBSCRIPTIONS' => append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=ucp_main&amp;mode=bookmarks')
+			'U_SUBSCRIPTIONS' => append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=ucp_main&amp;mode=subscribed')
 		));
 	}
     public function inject_users_for_topic($topic_id)
