@@ -35,4 +35,6 @@ $lang = array_merge($lang, array(
 	'DISABLED_SIG_BBCODES_EXPLAIN' => 'The bbcode tags that are disallowed from being used in user signatures.',
 	'UNSPECIFIED' => 'Unspecified',
 	'VLA_ENDS' => 'V/LA Ends',
+	'SUBSCRIPTIONS' => 'Subscriptions',
+	'BOOKMARKS' => 'Bookmarks',
 ));

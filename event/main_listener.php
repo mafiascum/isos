@@ -78,11 +78,15 @@ class main_listener implements EventSubscriberInterface
 	}
 	public function page_header_after($event)
 	{
-		global $forum_id, $topic_id;
+		global $forum_id, $topic_id, $phpEx, $phpbb_root_path;
 		if(isset($forum_id) || isset($topic_id))
 		{
 			$event['display_online_list'] = false;
 		}
+		$this->template->assign_vars(array(
+			'U_BOOKMARKS' => append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=ucp_main&amp;mode=bookmarks'),
+			'U_SUBSCRIPTIONS' => append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=ucp_main&amp;mode=bookmarks')
+		));
 	}
     public function inject_users_for_topic($topic_id)
     {
