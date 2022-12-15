@@ -54,6 +54,7 @@ class main_listener implements EventSubscriberInterface
 			'core.viewtopic_before_f_read_check' => 'viewtopic_before_f_read_check',
 			'core.viewtopic_highlight_modify' => 'viewtopic_highlight_modify',
 			'core.page_header' => 'page_header_after',
+			'core.viewtopic_post_rowset_data' => 'viewtopic_post_rowset_data'
         );
     }
 
@@ -75,6 +76,46 @@ class main_listener implements EventSubscriberInterface
         $this->db = $db;
 		$this->user = $user;
 		$this->language = $language;
+	}
+	private function is_mafia_forum($config, $forum_id)
+	{
+		$sql = 'SELECT forum_parents FROM ' . FORUMS_TABLE . ' WHERE forum_id=' . $forum_id;
+		$result = $this->db->sql_query($sql);
+		$is_mafia_forum = false;
+
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$forum_parents = unserialize($row['forum_parents']);
+			foreach($forum_parents as $parent_forum_id => $parent_forum)
+			{
+				if($parent_forum_id == $config['mafia_forums_id'])
+				{
+					$is_mafia_forum = true;
+					break;
+				}
+			}
+		}
+
+		$this->db->sql_freeresult($result);
+		return $is_mafia_forum;
+	}
+	public function viewtopic_post_rowset_data($event)
+	{
+		global $config;
+		$row = $event['row'];
+		$rowset_data = $event['rowset_data'];
+		$is_mafia_forum = $this->is_mafia_forum($config, $rowset_data['forum_id']);
+
+		if($is_mafia_forum)
+		{
+			if($rowset_data['hide_post'] == true && $rowset_data['post_visibility'] != ITEM_DELETED)
+			{
+				$rowset_data['hide_post'] = false;
+			}
+			$rowset_data['foe'] = false;
+		}
+
+		$event['rowset_data'] = $rowset_data;
 	}
 	public function page_header_after($event)
 	{
