@@ -1,3 +1,6 @@
 dd.profile-user_pronoun_text {
     display: none;
 }
+.post-number-bolded {
+    font-weight: bold;
+}
